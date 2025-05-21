@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Course Catalog</h1>
+    <div class="row">
+        {% for course in courses %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        Instructor: {{ course.instructor.get_full_name|default:course.instructor.username }}
+                    </h6>
+                    <p class="card-text">{{ course.description|truncatewords:30 }}</p>
+                    <div class="mb-2">
+                        <span class="badge bg-primary">Difficulty: {{ course.difficulty }}</span>
+                        <span class="badge bg-secondary">Duration: {{ course.duration }}</span>
+                    </div>
+                    <div class="mb-2">
+                        {% for cat in course.categories.all %}
+                            <span class="badge bg-info text-dark">{{ cat.name }}</span>
+                        {% endfor %}
+                    </div>
+                    <a href="{% url 'course_detail' course.slug %}" class="btn btn-outline-primary mt-auto">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p>No courses available.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

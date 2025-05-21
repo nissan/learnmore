@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h1 class="card-title">{{ course.title }}</h1>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        Instructor: {{ course.instructor.get_full_name|default:course.instructor.username }}
+                    </h6>
+                    <div class="mb-2">
+                        {% for cat in course.categories.all %}
+                            <span class="badge bg-info text-dark">{{ cat.name }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-primary">Difficulty: {{ course.difficulty }}</span>
+                        <span class="badge bg-secondary">Duration: {{ course.duration }}</span>
+                    </div>
+                    <p class="card-text mt-3">{{ course.description }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Course Info</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Instructor:</strong> {{ course.instructor.get_full_name|default:course.instructor.username }}</li>
+                        <li class="list-group-item"><strong>Difficulty:</strong> {{ course.difficulty }}</li>
+                        <li class="list-group-item"><strong>Duration:</strong> {{ course.duration }}</li>
+                        <li class="list-group-item"><strong>Categories:</strong> 
+                            {% for cat in course.categories.all %}{{ cat.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </li>
+                        <li class="list-group-item"><strong>Created:</strong> {{ course.created_at|date:'M d, Y' }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
