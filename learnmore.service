@@ -1,0 +1,18 @@
+[Unit]
+Description=LearnMore Gunicorn daemon
+After=network.target
+
+[Service]
+User=s4512158
+Group=www-data
+WorkingDirectory=/home/s4512158/www/djangoapps/learnmore
+ExecStart=/home/s4512158/www/djangoapps/learnmore/start_server.sh
+Restart=on-failure
+RestartSec=5s
+
+# Optional: Environment variables can be set here instead of in the start script
+# Environment=DJANGO_SETTINGS_MODULE=learnmore.settings
+# Environment=PYTHONPATH=/home/s4512158/www/djangoapps/learnmore
+
+[Install]
+WantedBy=multi-user.target 
