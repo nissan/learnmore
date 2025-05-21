@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <h1>Submit Quiz: {{ quiz.title }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="score" class="form-label">Score (for testing):</label>
+            <input type="number" step="0.01" min="0" max="100" name="score" id="score" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Quiz</button>
+    </form>
+</div>
+{% endblock %} 

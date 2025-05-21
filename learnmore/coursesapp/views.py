@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.urls import reverse, reverse_lazy
 from django.utils.text import slugify
 from rest_framework import generics, viewsets
-from .models import Course, Quiz, Enrollment, Module
+from .models import Course, Quiz, Enrollment, Module, QuizAttempt
 from .forms import CourseForm, ModuleForm, QuizForm, ModuleFormSet
 from django.db import transaction
 from django.forms import modelformset_factory
@@ -240,3 +240,17 @@ def generate_qr_code(request):
         return response
     except Exception as e:
         return HttpResponse(f'Error generating QR code: {str(e)}', status=500)
+
+@login_required
+def submit_quiz(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    user = request.user
+
+    if request.method == 'POST':
+        # TODO: Replace with real grading logic
+        score = float(request.POST.get('score', 0))
+        QuizAttempt.objects.create(user=user, quiz=quiz, score=score)
+        messages.success(request, f'Quiz submitted! Your score: {score}')
+        return redirect('quiz_detail', quiz_id=quiz.id)
+
+    return render(request, 'coursesapp/submit_quiz.html', {'quiz': quiz})

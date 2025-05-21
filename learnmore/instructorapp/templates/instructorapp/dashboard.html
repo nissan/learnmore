@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load average %}
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4">Instructor Dashboard</h1>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'course_create' %}" class="btn btn-success">Create New Course</a>
+        </div>
+    </div>
+
+    {% for stat in course_stats %}
+    <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="mb-0">{{ stat.course.title }}</h3>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'course_detail' stat.course.slug %}" class="btn btn-primary">Manage Course</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <!-- Course Overview -->
+                <div class="col-lg-4 mb-4">
+                    <div class="p-3 border rounded bg-light h-100">
+                        <h5 class="border-bottom pb-2 mb-3">Course Overview</h5>
+                        <div class="mb-3">
+                            <span class="badge {% if stat.course.is_published %}bg-success{% else %}bg-warning{% endif %} mb-2">
+                                {{ stat.course.is_published|yesno:"Published,Draft" }}
+                            </span>
+                        </div>
+                        <p><strong>Created:</strong> {{ stat.course.created_at|date:"M d, Y" }}</p>
+                        <p><strong>Enrolled Students:</strong> {{ stat.enrolled_count }}</p>
+                        <p><strong>Total Quizzes:</strong> {{ stat.quiz_count }}</p>
+                        <p><strong>Average Score:</strong> {{ stat.avg_score|floatformat:1|default:'N/A' }}</p>
+                    </div>
+                </div>
+                
+                <!-- Modules Section -->
+                <div class="col-lg-4 mb-4">
+                    <div class="p-3 border rounded h-100">
+                        <h5 class="border-bottom pb-2 mb-3">Modules</h5>
+                        <div class="list-group">
+                            {% for module in stat.modules %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ module.title }}</span>
+                                <a href="{% url 'add_quiz_to_module' stat.course.slug module.id %}" class="btn btn-sm btn-outline-primary">Add Quiz</a>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item">No modules yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quiz Stats Section -->
+                <div class="col-lg-4 mb-4">
+                    <div class="p-3 border rounded h-100">
+                        <h5 class="border-bottom pb-2 mb-3">Quiz Performance</h5>
+                        <div class="list-group">
+                            {% for quiz in stat.quizzes %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>{{ quiz.title }}</strong>
+                                    {% with quiz_attempts=quiz.quizattempt_set.all %}
+                                        {% if quiz_attempts %}
+                                            <span class="badge bg-info">{{ quiz_attempts|average:'score'|default:'N/A' }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No attempts</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item">No quizzes yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Enrollments Row -->
+            <div class="row mt-2">
+                <div class="col-12">
+                    <div class="p-3 border rounded">
+                        <h5 class="border-bottom pb-2 mb-3">Recent Enrollments</h5>
+                        <div class="row">
+                            {% for enroll in stat.recent_enrollments %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body py-2">
+                                        <i class="bi bi-person-fill me-2"></i>
+                                        {{ enroll.user.get_full_name|default:enroll.user.username }}
+                                        <div class="small text-muted">{{ enroll.enrolled_at|date:"M d, Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">No recent enrollments.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info p-4">
+        <h4 class="alert-heading">No Courses Yet</h4>
+        <p>You are not instructing any courses yet. Click the "Create New Course" button to get started.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% comment %}
+You may want to add a custom template filter for average quiz score per quiz if not already available.
+{% endcomment %} 

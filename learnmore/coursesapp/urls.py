@@ -13,6 +13,7 @@ urlpatterns = [
     path('qr/', views.generate_qr_code, name='generate_qr_code'),
     path('<slug:slug>/', views.CourseDetailView.as_view(), name='course_detail'),
     path('quiz/<int:quiz_id>/', views.QuizDetailView.as_view(), name='quiz_detail'),
+    path('quiz/<int:quiz_id>/submit/', views.submit_quiz, name='submit_quiz'),
     path('enroll/<slug:course_slug>/', views.enroll_course, name='enroll_course'),
     path('<slug:course_slug>/module/<int:module_id>/add-quiz/', views.add_quiz_to_module, name='add_quiz_to_module'),
     path('<slug:course_slug>/edit-modules/', views.edit_modules, name='edit_modules'),

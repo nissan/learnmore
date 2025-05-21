@@ -150,7 +150,8 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = '/learnmore/'
+LOGIN_REDIRECT_URL = '/learnmore/dashboard/'
+ACCOUNT_LOGIN_REDIRECT_URL = '/learnmore/dashboard/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/learnmore/'
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']

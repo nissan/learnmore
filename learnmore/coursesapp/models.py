@@ -54,3 +54,12 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} enrolled in {self.course.title}"
+
+class QuizAttempt(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='quiz_attempts')
+    quiz = models.ForeignKey('Quiz', on_delete=models.CASCADE, related_name='attempts')
+    score = models.FloatField()
+    attempted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.quiz.title} ({self.score})"
