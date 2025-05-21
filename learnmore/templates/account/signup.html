@@ -20,46 +20,42 @@
             --warning: #f59e0b;
             --danger: #ef4444;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--dark); background-color: #f5f8ff; min-height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--dark); background: linear-gradient(135deg, #f0f7ff 0%, #f5f3ff 100%); min-height: 100vh; display: flex; flex-direction: column; }
         .navbar-brand { font-weight: 700; color: var(--primary) !important; }
-        .registration-container { max-width: 600px; margin: 2rem auto; padding: 2rem; background-color: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
+        .registration-container { max-width: 430px; margin: 2.5rem auto; padding: 2.5rem 2rem; background-color: white; border-radius: 18px; box-shadow: 0 10px 32px rgba(37,99,235,0.10); }
         .form-title { text-align: center; margin-bottom: 2rem; }
-        .form-title h1 { font-weight: 700; color: var(--primary-dark); margin-bottom: 0.5rem; }
-        .form-title p { color: var(--secondary); }
-        .form-label { font-weight: 600; margin-bottom: 0.5rem; }
-        .form-control, .form-select { padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
-        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .form-title h1 { font-weight: 800; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; font-size: 2rem; }
+        .form-title p { color: var(--secondary); font-size: 1.1rem; }
+        .form-label { font-weight: 600; margin-bottom: 0.5rem; color: var(--dark); }
+        .form-control, .form-select { padding: 0.85rem 1rem; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 1rem; background: #f8fafc; transition: border-color 0.3s, box-shadow 0.3s; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08); background: #fff; }
+        .mb-3, .mb-4 { margin-bottom: 1.25rem !important; }
         .password-container { position: relative; }
-        .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--secondary); cursor: pointer; }
+        .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--secondary); cursor: pointer; padding: 5px; transition: color 0.3s ease; }
+        .password-toggle:hover { color: var(--primary); }
         .password-strength { height: 5px; border-radius: 5px; margin-top: 0.5rem; background-color: #e2e8f0; overflow: hidden; }
         .password-strength-meter { height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease; }
         .strength-weak { width: 33%; background-color: var(--danger); }
         .strength-medium { width: 66%; background-color: var(--warning); }
         .strength-strong { width: 100%; background-color: var(--success); }
         .strength-text { font-size: 0.75rem; margin-top: 0.25rem; }
-        .role-options { display: flex; gap: 1rem; margin-top: 0.5rem; }
-        .role-option { flex: 1; position: relative; }
-        .role-option input { position: absolute; opacity: 0; width: 0; height: 0; }
-        .role-option label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; text-align: center; }
-        .role-option input:checked + label { border-color: var(--primary); background-color: rgba(37, 99, 235, 0.05); }
+        .role-options { display: flex; gap: 0.75rem; margin-top: 0.5rem; justify-content: space-between; }
+        .role-option { flex: 1; }
+        .role-option input[type="radio"] { display: none; }
+        .role-option label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s; text-align: center; background: #f8fafc; font-size: 1rem; font-weight: 500; }
+        .role-option input:checked + label { border-color: var(--primary); background: linear-gradient(90deg, #e0e7ff 0%, #f0f7ff 100%); color: var(--primary-dark); box-shadow: 0 2px 8px rgba(37,99,235,0.08); }
         .role-option i { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary); }
         .role-option .role-name { font-weight: 600; margin-bottom: 0.25rem; }
         .role-option .role-desc { font-size: 0.75rem; color: var(--secondary); }
-        .divider { display: flex; align-items: center; margin: 1.5rem 0; color: var(--secondary); }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
-        .divider::before { margin-right: 1rem; }
-        .divider::after { margin-left: 1rem; }
-        .social-login { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
-        .social-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; background-color: white; font-weight: 600; transition: all 0.3s ease; text-decoration: none; color: var(--dark); }
-        .social-btn:hover { background-color: #f8fafc; transform: translateY(-2px); }
-        .social-btn i { font-size: 1.25rem; }
-        .google-btn i { color: #ea4335; }
-        .btn-primary { background-color: var(--primary); border-color: var(--primary); padding: 0.75rem 2rem; font-weight: 600; border-radius: 8px; transition: all 0.3s ease; }
-        .btn-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); }
+        .divider { display: flex; align-items: center; margin: 1.5rem 0; color: var(--secondary); font-weight:600; font-size:1.1rem; background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%); color: white; border-radius: 8px; padding: 0.5rem 0; box-shadow: 0 2px 8px rgba(37,99,235,0.08); text-align:center; margin-bottom:2rem; justify-content: center; }
+        .btn-primary { background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%); border: none; padding: 0.85rem 2rem; font-weight: 600; border-radius: 10px; font-size: 1.1rem; transition: all 0.3s; box-shadow: 0 2px 8px rgba(37,99,235,0.08); width: 100%; }
+        .btn-primary:hover { background: linear-gradient(90deg, #1e40af 0%, #7c3aed 100%); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.13); }
         .login-link { text-align: center; margin-top: 1.5rem; }
         .login-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
         .login-link a:hover { text-decoration: underline; }
-        @media (max-width: 767.98px) { .registration-container { padding: 1.5rem; margin: 1rem; } .role-options { flex-direction: column; gap: 0.5rem; } .social-login { flex-direction: column; } }
+        .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+        .form-check-label { color: var(--secondary); font-size: 0.95rem; }
+        @media (max-width: 767.98px) { .registration-container { padding: 1.5rem; margin: 1rem; } .role-options { flex-direction: column; gap: 0.5rem; } }
     </style>
 </head>
 <body>
@@ -76,86 +72,82 @@
                 <h1>Create Your Account</h1>
                 <p>Join thousands of educators and learners on LearnMore</p>
             </div>
-            <div class="social-login">
-                <a href="{% provider_login_url 'google' %}" class="social-btn google-btn">
-                    <i class="bi bi-google"></i>
-                    <span>Continue with Google</span>
-                </a>
+            <div class="divider" style="font-weight:600; font-size:1.1rem; background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%); color: white; border-radius: 8px; padding: 0.5rem 0; box-shadow: 0 2px 8px rgba(37,99,235,0.08); text-align:center; margin-bottom:2rem;">
+                Register with email
             </div>
-            <div class="divider">or register with email</div>
             <form method="post" action="{% url 'account_signup' %}">
                 {% csrf_token %}
-                {% for field in form.visible_fields %}
-                    {% if field.name == 'role' %}
-                        <div class="mb-4">
-                            <label class="form-label">I am a:</label>
-                            <div class="role-options">
-                                <div class="role-option">
-                                    <input type="radio" name="role" id="studentRole" value="student" {% if field.value == 'student' %}checked{% endif %}>
-                                    <label for="studentRole">
-                                        <i class="bi bi-mortarboard"></i>
-                                        <div class="role-name">Student</div>
-                                        <div class="role-desc">Access courses and learn at your own pace</div>
-                                    </label>
-                                </div>
-                                <div class="role-option">
-                                    <input type="radio" name="role" id="instructorRole" value="instructor" {% if field.value == 'instructor' %}checked{% endif %}>
-                                    <label for="instructorRole">
-                                        <i class="bi bi-person-workspace"></i>
-                                        <div class="role-name">Instructor</div>
-                                        <div class="role-desc">Create courses and teach students</div>
-                                    </label>
-                                </div>
-                                <div class="role-option">
-                                    <input type="radio" name="role" id="adminRole" value="admin" {% if field.value == 'admin' %}checked{% endif %}>
-                                    <label for="adminRole">
-                                        <i class="bi bi-building"></i>
-                                        <div class="role-name">Admin</div>
-                                        <div class="role-desc">Manage institution-wide learning</div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    {% elif field.name == 'password1' %}
-                        <div class="mb-3">
-                            {{ field.label_tag }}
-                            <div class="password-container">
-                                {{ field }}
-                                <button type="button" class="password-toggle" id="passwordToggle">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <div class="password-strength">
-                                <div class="password-strength-meter" id="passwordStrengthMeter"></div>
-                            </div>
-                            <div class="strength-text" id="passwordStrengthText">Password strength: Enter a password</div>
-                            {% if field.errors %}
-                                <div class="text-danger small">{{ field.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                    {% elif field.name == 'password2' %}
-                        <div class="mb-4">
-                            {{ field.label_tag }}
-                            <div class="password-container">
-                                {{ field }}
-                                <button type="button" class="password-toggle" id="confirmPasswordToggle">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            {% if field.errors %}
-                                <div class="text-danger small">{{ field.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                    {% else %}
-                        <div class="mb-3">
-                            {{ field.label_tag }}
-                            {{ field }}
-                            {% if field.errors %}
-                                <div class="text-danger small">{{ field.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
+                <div class="mb-3">
+                    {{ form.email.label_tag }}
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small">{{ form.email.errors|striptags }}</div>
                     {% endif %}
-                {% endfor %}
+                </div>
+                <div class="mb-3">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="text-danger small">{{ form.username.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">I am a:</label>
+                    <div class="role-options">
+                        <div class="role-option">
+                            <input type="radio" name="role" id="studentRole" value="student" {% if form.role.value == 'student' %}checked{% endif %}>
+                            <label for="studentRole">
+                                <i class="bi bi-mortarboard"></i>
+                                <div class="role-name">Student</div>
+                                <div class="role-desc">Access courses and learn at your own pace</div>
+                            </label>
+                        </div>
+                        <div class="role-option">
+                            <input type="radio" name="role" id="instructorRole" value="instructor" {% if form.role.value == 'instructor' %}checked{% endif %}>
+                            <label for="instructorRole">
+                                <i class="bi bi-person-workspace"></i>
+                                <div class="role-name">Instructor</div>
+                                <div class="role-desc">Create courses and teach students</div>
+                            </label>
+                        </div>
+                        <div class="role-option">
+                            <input type="radio" name="role" id="adminRole" value="admin" {% if form.role.value == 'admin' %}checked{% endif %}>
+                            <label for="adminRole">
+                                <i class="bi bi-building"></i>
+                                <div class="role-name">Admin</div>
+                                <div class="role-desc">Manage institution-wide learning</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    {{ form.password1.label_tag }}
+                    <div class="password-container">
+                        {{ form.password1 }}
+                        <button type="button" class="password-toggle" id="passwordToggle">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-strength">
+                        <div class="password-strength-meter" id="passwordStrengthMeter"></div>
+                    </div>
+                    <div class="strength-text" id="passwordStrengthText">Password strength: Enter a password</div>
+                    {% if form.password1.errors %}
+                        <div class="text-danger small">{{ form.password1.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    {{ form.password2.label_tag }}
+                    <div class="password-container">
+                        {{ form.password2 }}
+                        <button type="button" class="password-toggle" id="confirmPasswordToggle">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}
+                        <div class="text-danger small">{{ form.password2.errors|striptags }}</div>
+                    {% endif %}
+                </div>
                 <div class="mb-4 form-check">
                     <input type="checkbox" class="form-check-input" id="termsCheck" required>
                     <label class="form-check-label" for="termsCheck">
