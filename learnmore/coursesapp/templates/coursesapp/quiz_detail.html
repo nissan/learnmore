@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">{{ quiz.title }}</h2>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        Module: {{ quiz.module.title }}<br>
+                        Course: <a href="{% url 'course_detail' slug=quiz.module.course.slug %}">{{ quiz.module.course.title }}</a>
+                    </h6>
+                    {% if quiz.instructions %}
+                        <p class="mt-3">{{ quiz.instructions }}</p>
+                    {% else %}
+                        <p class="text-muted">No instructions for this quiz.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

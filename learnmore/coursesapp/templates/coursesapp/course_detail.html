@@ -21,7 +21,83 @@
                         <span class="badge bg-secondary">Duration: {{ course.duration }}</span>
                     </div>
                     <p class="card-text mt-3">{{ course.description }}</p>
+                    {% if user.is_authenticated %}
+                        {% if is_instructor %}
+                            <div class="alert alert-info">
+                                You are the instructor for this course!
+                            </div>
+                        {% elif is_enrolled %}
+                            <div class="alert alert-success">
+                                You are enrolled in this course!
+                            </div>
+                        {% else %}
+                            <form action="{% url 'enroll_course' course_slug=course.slug %}" method="post" class="mt-3">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">Enroll in Course</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            <a href="{% url 'account_login' %}">Log in</a> to enroll in this course.
+                        </div>
+                    {% endif %}
                 </div>
+            </div>
+            <div class="mt-4">
+                <h3>Modules</h3>
+                {% if not user.is_authenticated or not is_enrolled %}
+                    <div class="alert alert-warning">
+                        Enroll in this course to access module content and quizzes.
+                    </div>
+                {% endif %}
+                {% if course.modules.all %}
+                    <div class="accordion" id="modulesAccordion">
+                        {% if user.is_authenticated and is_enrolled %}
+                        {% for module in course.modules.all %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ forloop.counter }}">
+                                        {{ module.title }}
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#modulesAccordion">
+                                    <div class="accordion-body">
+                                        <p>{{ module.description }}</p>
+                                        <h6>Quizzes:</h6>
+                                        {% if module.quizzes.all %}
+                                            <ul>
+                                                {% for quiz in module.quizzes.all %}
+                                                    <li>
+                                                        <strong><a href="{% url 'quiz_detail' quiz_id=quiz.id %}">{{ quiz.title }}</a></strong>
+                                                        {% if quiz.instructions %}<br><small>{{ quiz.instructions }}</small>{% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="text-muted">No quizzes for this module.</p>
+                                        {% endif %}
+                                        {% if is_instructor %}
+                                            <a href="{% url 'add_quiz_to_module' course.slug module.id %}" class="btn btn-success">Add Quiz</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        {% else %}
+                            {% for module in course.modules.all %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" disabled>
+                                            {{ module.title }}
+                                        </button>
+                                    </h2>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No modules for this course yet.</p>
+                {% endif %}
             </div>
         </div>
         <div class="col-lg-4">
@@ -36,7 +112,11 @@
                             {% for cat in course.categories.all %}{{ cat.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                         </li>
                         <li class="list-group-item"><strong>Created:</strong> {{ course.created_at|date:'M d, Y' }}</li>
+                        <li class="list-group-item"><strong>Status:</strong> {% if course.is_published %}Published{% else %}Draft{% endif %}</li>
                     </ul>
+                    {% if is_instructor %}
+                        <a href="{% url 'edit_modules' course.slug %}" class="btn btn-primary mt-3">Edit Modules</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

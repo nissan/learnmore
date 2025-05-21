@@ -4,6 +4,13 @@
 {% block content %}
 <div class="container py-4">
     <h1 class="mb-4">Course Catalog</h1>
+    {% if is_instructor %}
+    <div class="mb-4 text-end">
+        <a href="{% url 'course_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create New Course
+        </a>
+    </div>
+    {% endif %}
     <div class="row">
         {% for course in courses %}
         <div class="col-md-6 col-lg-4 mb-4">

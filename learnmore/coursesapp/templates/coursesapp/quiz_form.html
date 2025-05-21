@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>Add Quiz to {{ module.title }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Add Quiz</button>
+        <a href="{% url 'course_detail' course.slug %}" class="btn btn-secondary">Back to Course</a>
+    </form>
+</div>
+{% endblock %} 

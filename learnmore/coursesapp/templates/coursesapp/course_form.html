@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Create Course</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <h2>Modules</h2>
+    {{ module_formset.management_form }}
+    {% for module_form in module_formset %}
+      <div class="card mb-3 p-3">
+        {{ module_form.as_p }}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Create</button>
+  </form>
+{% endblock %} 
