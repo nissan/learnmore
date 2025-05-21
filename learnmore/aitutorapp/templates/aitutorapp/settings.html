@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h4 mb-0">OpenAI Settings</h1>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-info-circle-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">API Key Configuration</h5>
+                                <p class="mb-0">These settings control how the AI tutor interacts with OpenAI's API. You need a valid API key for the tutor to function properly.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.api_key.id_for_label }}" class="form-label">OpenAI API Key</label>
+                            {{ form.api_key }}
+                            <div class="form-text">Your OpenAI API key will be stored securely. You can get a key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI's dashboard</a>.</div>
+                            {% if form.api_key.errors %}
+                                <div class="invalid-feedback d-block">{{ form.api_key.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.model.id_for_label }}" class="form-label">Model</label>
+                            {{ form.model }}
+                            <div class="form-text">Select the OpenAI model to use. More powerful models provide better responses but cost more.</div>
+                            {% if form.model.errors %}
+                                <div class="invalid-feedback d-block">{{ form.model.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.temperature.id_for_label }}" class="form-label">Temperature ({{ form.temperature.value }})</label>
+                                    {{ form.temperature }}
+                                    <div class="form-text">Controls randomness: 0 is deterministic, 1 is very creative</div>
+                                    {% if form.temperature.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.temperature.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.max_tokens.id_for_label }}" class="form-label">Max Tokens</label>
+                                    {{ form.max_tokens }}
+                                    <div class="form-text">Maximum response length (1 token ≈ 4 characters)</div>
+                                    {% if form.max_tokens.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.max_tokens.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update temperature label when slider changes
+        const temperatureInput = document.getElementById('{{ form.temperature.id_for_label }}');
+        const temperatureLabel = document.querySelector('label[for="{{ form.temperature.id_for_label }}"]');
+        
+        temperatureInput.addEventListener('input', function() {
+            temperatureLabel.textContent = `Temperature (${this.value})`;
+        });
+    });
+</script>
+{% endblock %}

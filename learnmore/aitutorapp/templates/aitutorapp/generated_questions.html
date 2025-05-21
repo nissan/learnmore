@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'generate_quiz_question' module.id %}">AI Quiz Generator</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Generated Questions</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h2 class="h4 mb-0">Generated Questions</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <p class="mb-0">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Review the generated questions below. You can add them to an existing quiz or create a new quiz
+                    for the module.
+                </p>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="mb-4">
+                <h3 class="h5">Available Quizzes</h3>
+                <select id="quiz-selector" class="form-select mb-2">
+                    <option value="">Create a new quiz</option>
+                    {% for quiz in module.quizzes.all %}
+                        <option value="{{ quiz.id }}">{{ quiz.title }}</option>
+                    {% endfor %}
+                </select>
+                <div id="new-quiz-title-container" class="mb-3">
+                    <label for="new-quiz-title" class="form-label">New Quiz Title</label>
+                    <input type="text" class="form-control" id="new-quiz-title" placeholder="Enter quiz title" value="Quiz for {{ module.title }}">
+                </div>
+            </div>
+            
+            <div class="accordion" id="questionsAccordion">
+                {% for question in questions %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ forloop.counter }}">
+                                Question {{ forloop.counter }}: {{ question.question_text|truncatechars:100 }}
+                            </button>
+                        </h2>
+                        <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#questionsAccordion">
+                            <div class="accordion-body">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <div class="d-flex justify-content-between">
+                                            <span>{{ question.question_type|title }} Question ({{ question.points }} points)</span>
+                                            <span class="badge bg-{{ question.difficulty|lower }}">
+                                                {% if question.difficulty == 'easy' %}
+                                                    Easy
+                                                {% elif question.difficulty == 'medium' %}
+                                                    Medium
+                                                {% else %}
+                                                    Hard
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text fw-bold">{{ question.question_text }}</p>
+                                        
+                                        {% if question.question_type == 'multiple_choice' and question.options %}
+                                            <div class="mb-3">
+                                                <p class="fw-bold">Options:</p>
+                                                <ol type="A">
+                                                    {% for option in question.options %}
+                                                        <li class="{% if forloop.counter0 == question.correct_answer or option == question.correct_answer %}text-success fw-bold{% endif %}">
+                                                            {{ option }}
+                                                            {% if forloop.counter0 == question.correct_answer or option == question.correct_answer %}
+                                                                <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ol>
+                                            </div>
+                                        {% elif question.question_type == 'true_false' %}
+                                            <div class="mb-3">
+                                                <p class="fw-bold">Correct Answer: 
+                                                    <span class="text-success">{{ question.correct_answer }}</span>
+                                                </p>
+                                            </div>
+                                        {% elif question.question_type == 'short_answer' %}
+                                            <div class="mb-3">
+                                                <p class="fw-bold">Model Answer:</p>
+                                                <p class="text-success">{{ question.correct_answer }}</p>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if question.explanation %}
+                                            <div class="mb-3">
+                                                <p class="fw-bold">Explanation:</p>
+                                                <p>{{ question.explanation }}</p>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <form action="{% url 'add_generated_question' module.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="question_data" value="{{ question|safe|stringformat:'s'|escapejs }}">
+                                            <input type="hidden" name="quiz_id" class="quiz-id-input" value="">
+                                            <input type="hidden" name="quiz_title" class="quiz-title-input" value="">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-plus-circle"></i> Add to Quiz
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'generate_quiz_question' module.id %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Generate Different Questions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quizSelector = document.getElementById('quiz-selector');
+        const newQuizTitleContainer = document.getElementById('new-quiz-title-container');
+        const newQuizTitleInput = document.getElementById('new-quiz-title');
+        const quizIdInputs = document.querySelectorAll('.quiz-id-input');
+        const quizTitleInputs = document.querySelectorAll('.quiz-title-input');
+        
+        // Update hidden inputs when quiz selector changes
+        quizSelector.addEventListener('change', function() {
+            const selectedQuizId = this.value;
+            
+            // Show/hide new quiz title input
+            if (selectedQuizId === '') {
+                newQuizTitleContainer.style.display = 'block';
+            } else {
+                newQuizTitleContainer.style.display = 'none';
+            }
+            
+            // Update hidden inputs in all forms
+            quizIdInputs.forEach(input => {
+                input.value = selectedQuizId;
+            });
+        });
+        
+        // Update quiz title inputs when the title input changes
+        newQuizTitleInput.addEventListener('input', function() {
+            const title = this.value;
+            quizTitleInputs.forEach(input => {
+                input.value = title;
+            });
+        });
+        
+        // Initialize
+        quizSelector.dispatchEvent(new Event('change'));
+        newQuizTitleInput.dispatchEvent(new Event('input'));
+    });
+</script>
+{% endblock %} 

@@ -14,6 +14,7 @@
                     <th>Description</th>
                     <th>Order</th>
                     <th>Delete?</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,6 +24,13 @@
                     <td>{{ form.description }}</td>
                     <td>{{ form.order }}</td>
                     <td>{% if form.instance.pk %}{{ form.DELETE }}{% endif %}</td>
+                    <td>
+                        {% if form.instance.pk %}
+                            <a href="{% url 'generate_quiz_question' form.instance.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-robot"></i> Generate Quiz
+                            </a>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

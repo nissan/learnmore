@@ -124,6 +124,15 @@
                     </ul>
                     {% if is_instructor %}
                         <a href="{% url 'edit_modules' course.slug %}" class="btn btn-primary mt-3">Edit Modules</a>
+                        <a href="{% url 'course_ai_settings' course.id %}" class="btn btn-outline-primary mt-3">
+                            <i class="bi bi-robot"></i> AI Tutor Settings
+                        </a>
+                    {% endif %}
+                    
+                    {% if user.is_authenticated and is_enrolled %}
+                        <a href="{% url 'chat_view' course.id %}" class="btn btn-success mt-3 w-100">
+                            <i class="bi bi-robot"></i> Ask AI Tutor
+                        </a>
                     {% endif %}
                 </div>
             </div>

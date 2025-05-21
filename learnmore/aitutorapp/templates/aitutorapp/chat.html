@@ -1,0 +1,526 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-sidebar {
+        background-color: #f8f9fa;
+        border-right: 1px solid #e9ecef;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .sessions-list {
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    
+    .session-item {
+        padding: 10px 15px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .session-item:hover {
+        background-color: #e9ecef;
+    }
+    
+    .session-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .session-item.active .session-actions {
+        opacity: 1;
+    }
+    
+    .session-title {
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .session-actions {
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .session-item:hover .session-actions {
+        opacity: 1;
+    }
+    
+    .chat-main {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .chat-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        background-color: #fff;
+    }
+    
+    .chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        max-width: 85%;
+    }
+    
+    .message.user {
+        margin-left: auto;
+    }
+    
+    .message.assistant {
+        margin-right: auto;
+    }
+    
+    .message.system {
+        margin: 10px auto;
+        max-width: 90%;
+    }
+    
+    .message-content {
+        padding: 12px 16px;
+        border-radius: 10px;
+        position: relative;
+    }
+    
+    .user .message-content {
+        background-color: #0d6efd;
+        color: white;
+        border-bottom-right-radius: 0;
+    }
+    
+    .assistant .message-content {
+        background-color: #e9ecef;
+        border-bottom-left-radius: 0;
+    }
+    
+    .system .message-content {
+        background-color: #ffc107;
+        color: #000;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .message-time {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .chat-input-container {
+        padding: 15px 20px;
+        background-color: #fff;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .chat-input {
+        resize: none;
+        overflow: hidden;
+        min-height: 50px;
+    }
+    
+    .rename-form {
+        display: none;
+    }
+    
+    #loading-indicator {
+        display: none;
+        margin-top: 10px;
+    }
+    
+    .lds-ellipsis {
+        display: inline-block;
+        position: relative;
+        width: 80px;
+        height: 20px;
+    }
+    
+    .lds-ellipsis div {
+        position: absolute;
+        top: 8px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #0d6efd;
+        animation-timing-function: cubic-bezier(0, 1, 1, 0);
+    }
+    
+    .lds-ellipsis div:nth-child(1) {
+        left: 8px;
+        animation: lds-ellipsis1 0.6s infinite;
+    }
+    
+    .lds-ellipsis div:nth-child(2) {
+        left: 8px;
+        animation: lds-ellipsis2 0.6s infinite;
+    }
+    
+    .lds-ellipsis div:nth-child(3) {
+        left: 32px;
+        animation: lds-ellipsis2 0.6s infinite;
+    }
+    
+    .lds-ellipsis div:nth-child(4) {
+        left: 56px;
+        animation: lds-ellipsis3 0.6s infinite;
+    }
+    
+    @keyframes lds-ellipsis1 {
+        0% { transform: scale(0); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes lds-ellipsis2 {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(24px, 0); }
+    }
+    
+    @keyframes lds-ellipsis3 {
+        0% { transform: scale(1); }
+        100% { transform: scale(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">AI Tutor - {{ course.title }}</h1>
+                <a href="{% url 'course_detail' course.slug %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Course
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="chat-container card">
+                <div class="card-body p-0 d-flex">
+                    <!-- Chat Sidebar -->
+                    <div class="chat-sidebar d-none d-md-flex" style="width: 300px;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Chat History</h5>
+                            <form action="{% url 'create_session' course.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-plus-circle"></i> New Chat
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="sessions-list">
+                            {% for chat_session in sessions %}
+                                <div class="session-item {% if chat_session.id == session.id %}active{% endif %}">
+                                    <a href="{% url 'chat_view_session' course.id chat_session.id %}" class="session-title text-decoration-none {% if chat_session.id == session.id %}text-white{% else %}text-dark{% endif %}">
+                                        {{ chat_session.title }}
+                                    </a>
+                                    <div class="session-actions">
+                                        <button class="btn btn-sm btn-link p-0 me-1 rename-btn" data-session-id="{{ chat_session.id }}" data-current-title="{{ chat_session.title }}">
+                                            <i class="bi bi-pencil text-{% if chat_session.id == session.id %}white{% else %}secondary{% endif %}"></i>
+                                        </button>
+                                        <form action="{% url 'delete_session' chat_session.id %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-link p-0" onclick="return confirm('Are you sure you want to delete this chat session?')">
+                                                <i class="bi bi-trash text-{% if chat_session.id == session.id %}white{% else %}danger{% endif %}"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="text-center text-muted py-3">
+                                    No chat sessions yet
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Main Area -->
+                    <div class="chat-main">
+                        <div class="chat-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                                <div class="d-md-none">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#chatSidebarMobile">
+                                        <i class="bi bi-list"></i> Chats
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-messages" id="chat-messages">
+                            {% for message in messages %}
+                                <div class="message {{ message.role }}">
+                                    <div class="message-content">
+                                        {{ message.content|linebreaksbr }}
+                                    </div>
+                                    <div class="message-time">
+                                        {{ message.timestamp|date:"F j, Y, g:i a" }}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="message assistant">
+                                    <div class="message-content">
+                                        Hello! I'm your AI tutor for {{ course.title }}. How can I help you understand the course material today?
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div id="loading-indicator">
+                                <div class="message assistant">
+                                    <div class="message-content">
+                                        <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-input-container">
+                            <form id="chat-form" method="post" action="{% url 'send_message' session.id %}">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    {{ form.content }}
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="bi bi-send"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Sidebar Offcanvas -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="chatSidebarMobile">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Chat History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form action="{% url 'create_session' course.id %}" method="post" class="mb-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-plus-circle"></i> New Chat
+            </button>
+        </form>
+        
+        <div class="list-group">
+            {% for chat_session in sessions %}
+                <div class="list-group-item list-group-item-action {% if chat_session.id == session.id %}active{% endif %} d-flex justify-content-between align-items-center">
+                    <a href="{% url 'chat_view_session' course.id chat_session.id %}" class="text-truncate me-3 {% if chat_session.id == session.id %}text-white{% endif %} text-decoration-none">
+                        {{ chat_session.title }}
+                    </a>
+                    <div class="d-flex">
+                        <button class="btn btn-sm btn-link p-0 me-2 rename-btn" data-session-id="{{ chat_session.id }}" data-current-title="{{ chat_session.title }}">
+                            <i class="bi bi-pencil text-{% if chat_session.id == session.id %}white{% else %}secondary{% endif %}"></i>
+                        </button>
+                        <form action="{% url 'delete_session' chat_session.id %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-link p-0" onclick="return confirm('Are you sure you want to delete this chat session?')">
+                                <i class="bi bi-trash text-{% if chat_session.id == session.id %}white{% else %}danger{% endif %}"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rename Chat Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rename-form">
+                    <input type="hidden" id="session-id" name="session_id">
+                    <div class="mb-3">
+                        <label for="session-title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="session-title" name="title" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-rename">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatForm = document.getElementById('chat-form');
+        const chatMessages = document.getElementById('chat-messages');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const messageInput = document.querySelector('.chat-input');
+        const renameModal = new bootstrap.Modal(document.getElementById('renameModal'));
+        
+        // Scroll to the bottom of the chat
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        scrollToBottom();
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Handle chat form submission
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(chatForm);
+            const userMessage = formData.get('content');
+            
+            if (!userMessage.trim()) {
+                return;
+            }
+            
+            // Add user message to the chat
+            const userMessageHtml = `
+                <div class="message user">
+                    <div class="message-content">
+                        ${userMessage.replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="message-time">
+                        ${new Date().toLocaleString()}
+                    </div>
+                </div>
+            `;
+            chatMessages.insertAdjacentHTML('beforeend', userMessageHtml);
+            scrollToBottom();
+            
+            // Clear the input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'block';
+            scrollToBottom();
+            
+            // Send the message to the server
+            fetch(chatForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                loadingIndicator.style.display = 'none';
+                
+                // Add the AI response to the chat
+                const assistantMessageHtml = `
+                    <div class="message assistant">
+                        <div class="message-content">
+                            ${data.message.replace(/\n/g, '<br>')}
+                        </div>
+                        <div class="message-time">
+                            ${new Date().toLocaleString()}
+                        </div>
+                    </div>
+                `;
+                chatMessages.insertAdjacentHTML('beforeend', assistantMessageHtml);
+                scrollToBottom();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingIndicator.style.display = 'none';
+                
+                // Add error message
+                const errorMessageHtml = `
+                    <div class="message system">
+                        <div class="message-content">
+                            Error processing your request. Please try again.
+                        </div>
+                    </div>
+                `;
+                chatMessages.insertAdjacentHTML('beforeend', errorMessageHtml);
+                scrollToBottom();
+            });
+        });
+        
+        // Handle session rename
+        const renameBtns = document.querySelectorAll('.rename-btn');
+        renameBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const sessionId = this.dataset.sessionId;
+                const currentTitle = this.dataset.currentTitle;
+                
+                document.getElementById('session-id').value = sessionId;
+                document.getElementById('session-title').value = currentTitle;
+                
+                renameModal.show();
+            });
+        });
+        
+        // Save rename
+        document.getElementById('save-rename').addEventListener('click', function() {
+            const form = document.getElementById('rename-form');
+            const sessionId = document.getElementById('session-id').value;
+            const formData = new FormData(form);
+            
+            fetch(`/ai/session/${sessionId}/rename/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+</script>
+{% endblock %} 

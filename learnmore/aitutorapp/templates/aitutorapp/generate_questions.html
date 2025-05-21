@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">AI Quiz Generator</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h4 mb-0">Generate Quiz Questions with AI</h1>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-lightbulb-fill fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">AI-Powered Quiz Generation</h5>
+                                <p class="mb-0">
+                                    Let AI help you create questions for module "{{ module.title }}". 
+                                    The AI will analyze your course content and generate relevant questions 
+                                    based on the topic you specify.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.topic.id_for_label }}" class="form-label">Topic</label>
+                            {{ form.topic }}
+                            <div class="form-text">Enter a specific topic or concept from your course that you want to create questions about.</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.question_type.id_for_label }}" class="form-label">Question Type</label>
+                                    {{ form.question_type }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.difficulty.id_for_label }}" class="form-label">Difficulty</label>
+                                    {{ form.difficulty }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.number_of_questions.id_for_label }}" class="form-label">Number of Questions</label>
+                            {{ form.number_of_questions }}
+                            <div class="form-text">How many questions to generate (1-5). More questions may take longer to generate.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'edit_modules' course.slug %}" class="btn btn-outline-secondary">Back to Modules</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-magic"></i> Generate Questions
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

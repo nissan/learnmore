@@ -2,18 +2,21 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from coursesapp.models import Course, Category, Module, Quiz
+from aitutorapp.models import CourseAISettings, OpenAISettings
+from aitutorapp.utils import get_course_content
 import random
 from datetime import timedelta
 from django.utils import timezone
+import os
 
 class Command(BaseCommand):
-    help = 'Seeds the database with demo courses, categories, and instructors'
+    help = 'Seeds the database with demo courses, categories, instructors, and AI settings'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--reset',
             action='store_true',
-            help='Delete all courses, modules, quizzes, and categories before seeding.'
+            help='Delete all courses, modules, quizzes, categories, and AI settings before seeding.'
         )
 
     def ensure_core_demo_users(self):
@@ -135,16 +138,80 @@ class Command(BaseCommand):
             counter += 1
         return slug
 
+    def setup_ai_settings(self):
+        """Setup global OpenAI settings"""
+        self.stdout.write('Setting up OpenAI configuration...')
+        
+        # Create default OpenAI settings if they don't exist
+        openai_settings, created = OpenAISettings.objects.get_or_create(
+            id=1,
+            defaults={
+                'api_key': os.environ.get('OPENAI_API_KEY', ''),
+                'model': 'gpt-3.5-turbo',
+                'temperature': 0.7,
+                'max_tokens': 1000
+            }
+        )
+        
+        if created:
+            self.stdout.write(self.style.SUCCESS('Created default OpenAI settings'))
+        else:
+            self.stdout.write('Using existing OpenAI settings')
+        
+        return openai_settings
+
+    def create_course_ai_settings(self, course):
+        """Create AI settings for a specific course and ingest its content for RAG"""
+        self.stdout.write(f'Setting up AI for course: {course.title}')
+        
+        # Create or update course AI settings
+        course_ai_settings, created = CourseAISettings.objects.get_or_create(
+            course=course,
+            defaults={
+                'is_enabled_for_students': True,
+                'is_enabled_for_instructors': True,
+                'system_prompt': self.generate_system_prompt(course)
+            }
+        )
+        
+        # Get course content for RAG context
+        course_content = get_course_content(course.id)
+        self.stdout.write(f'Ingested {len(course_content)} characters of content for RAG')
+        
+        return course_ai_settings
+
+    def generate_system_prompt(self, course):
+        """Generate a custom system prompt based on the course topic"""
+        prompts = [
+            f"Focus on providing clear explanations about {course.title} concepts with real-world examples.",
+            f"When explaining {course.title}, use analogies that are easy to understand for beginners.",
+            f"For this {course.title} course, emphasize practical applications and industry relevance.",
+            f"Encourage experimentation and learning by doing when discussing topics in {course.title}.",
+        ]
+        return random.choice(prompts)
+
     def handle(self, *args, **kwargs):
         reset = kwargs.get('reset', False)
         if reset:
-            self.stdout.write(self.style.WARNING('Resetting courses, modules, quizzes, and categories...'))
+            self.stdout.write(self.style.WARNING('Resetting courses, modules, quizzes, categories, and AI settings...'))
             from coursesapp.models import Course, Module, Quiz, Category
+            from aitutorapp.models import CourseAISettings, ChatSession, ChatMessage
+            
+            # Delete AI-related data first (to maintain foreign key integrity)
+            ChatMessage.objects.all().delete()
+            ChatSession.objects.all().delete()
+            CourseAISettings.objects.all().delete()
+            
+            # Then delete course data
             Course.objects.all().delete()
             Module.objects.all().delete()
             Quiz.objects.all().delete()
             Category.objects.all().delete()
-            self.stdout.write(self.style.SUCCESS('All course data cleared.'))
+            
+            self.stdout.write(self.style.SUCCESS('All course and AI data cleared.'))
+
+        # Set up OpenAI settings
+        openai_settings = self.setup_ai_settings()
 
         self.stdout.write('Ensuring core demo users (admin/instructor/student)...')
         core_users = self.ensure_core_demo_users()
@@ -155,7 +222,7 @@ class Command(BaseCommand):
         self.stdout.write('Creating categories...')
         categories = self.create_categories()
         
-        self.stdout.write('Creating courses...')
+        self.stdout.write('Creating courses with AI integration...')
         for i in range(25):  # Create 25 courses
             course_data = self.generate_course_data()
             base_slug = slugify(course_data['title'])
@@ -188,7 +255,8 @@ class Command(BaseCommand):
                     course=course,
                     title=f"Module {m}: {course.title} - Part {m}",
                     description=f"This is the description for module {m} of {course.title}.",
-                    order=m
+                    order=m,
+                    content=self.generate_module_content(course.title, m)
                 )
                 # Create 1-3 quizzes for each module
                 num_quizzes = random.randint(1, 3)
@@ -198,4 +266,22 @@ class Command(BaseCommand):
                         title=f"Quiz {q} for {module.title}",
                         instructions=f"Instructions for quiz {q} in module {m} of {course.title}."
                     )
-        self.stdout.write(self.style.SUCCESS('Successfully seeded the database!')) 
+            
+            # Set up AI for this course - this ingests the course content for RAG
+            self.create_course_ai_settings(course)
+            
+        self.stdout.write(self.style.SUCCESS('Successfully seeded the database with courses and AI integration!'))
+    
+    def generate_module_content(self, course_title, module_number):
+        """Generate more detailed content for modules to provide better RAG context"""
+        topic = course_title.split()[-2] if len(course_title.split()) > 2 else course_title
+        
+        sections = [
+            f"# Introduction to Module {module_number}\n\nThis module will cover key concepts in {topic} that will build on previous modules and prepare you for more advanced topics.\n",
+            f"## Key Concepts\n\n- Understanding {topic} fundamentals\n- Working with {topic} in practice\n- Advanced {topic} techniques\n- Industry applications of {topic}\n",
+            f"## Learning Objectives\n\nBy the end of this module, you will be able to:\n\n1. Explain core principles of {topic}\n2. Implement basic {topic} solutions\n3. Apply {topic} in real-world scenarios\n4. Evaluate different {topic} approaches\n",
+            f"## Detailed Content\n\nIn this section, we'll dive deeper into {topic} and explore how it works in various contexts. We'll cover theoretical foundations as well as practical implementations.\n\nThe most important aspects of {topic} that you should understand are the underlying principles and how they connect to other related technologies and methods.\n",
+            f"## Additional Resources\n\n- Recommended reading on {topic}\n- Practice exercises for {topic}\n- Online resources for further learning\n- Community forums discussing {topic}"
+        ]
+        
+        return "\n\n".join(sections) 
