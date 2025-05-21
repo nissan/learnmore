@@ -1,9 +1,71 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load course_tags %}
 
 {% block content %}
 <div class="container py-4">
     <h1 class="mb-4">Course Catalog</h1>
+
+    <!-- Search and Filter Controls -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Search bar -->
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search courses..." name="search" value="{{ search_query }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Category filter -->
+                <div class="col-md-2">
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"i" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Difficulty filter -->
+                <div class="col-md-2">
+                    <select class="form-select" name="difficulty">
+                        <option value="">All Difficulties</option>
+                        {% for level in difficulty_levels %}
+                            <option value="{{ level }}" {% if selected_difficulty == level|stringformat:"i" %}selected{% endif %}>
+                                {{ level }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Sort dropdown -->
+                <div class="col-md-2">
+                    <select class="form-select" name="sort">
+                        <option value="-created_at" {% if current_sort == "-created_at" %}selected{% endif %}>Newest First</option>
+                        <option value="created_at" {% if current_sort == "created_at" %}selected{% endif %}>Oldest First</option>
+                        <option value="title" {% if current_sort == "title" %}selected{% endif %}>Title A-Z</option>
+                        <option value="-title" {% if current_sort == "-title" %}selected{% endif %}>Title Z-A</option>
+                        <option value="difficulty" {% if current_sort == "difficulty" %}selected{% endif %}>Difficulty (Low-High)</option>
+                        <option value="-difficulty" {% if current_sort == "-difficulty" %}selected{% endif %}>Difficulty (High-Low)</option>
+                    </select>
+                </div>
+                
+                <div class="col-12">
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{% url 'course_catalog' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {% if is_instructor %}
     <div class="mb-4 text-end">
         <a href="{% url 'course_create' %}" class="btn btn-primary">
@@ -11,6 +73,24 @@
         </a>
     </div>
     {% endif %}
+    
+    <!-- Active filters display -->
+    {% if search_query or selected_category or selected_difficulty %}
+    <div class="mb-3">
+        <span class="me-2">Active filters:</span>
+        {% if search_query %}
+        <span class="badge bg-info text-dark me-1">Search: {{ search_query }}</span>
+        {% endif %}
+        {% if selected_category %}
+        <span class="badge bg-info text-dark me-1">Category: {{ categories|dictsort:"id"|dictget:selected_category|attr:"name" }}</span>
+        {% endif %}
+        {% if selected_difficulty %}
+        <span class="badge bg-info text-dark me-1">Difficulty: {{ selected_difficulty }}</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Courses Grid -->
     <div class="row">
         {% for course in courses %}
         <div class="col-md-6 col-lg-4 mb-4">
@@ -36,9 +116,82 @@
         </div>
         {% empty %}
         <div class="col-12">
-            <p>No courses available.</p>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No courses found matching your criteria. Try adjusting your filters or search terms.
+            </div>
         </div>
         {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if query_params %}&{{ query_params }}{% endif %}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <a class="page-link" href="#">{{ num }}</a>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if query_params %}&{{ query_params }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <div class="text-center text-muted">
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} courses
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

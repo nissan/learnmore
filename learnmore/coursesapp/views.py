@@ -6,13 +6,14 @@ from django.contrib import messages
 from django.urls import reverse, reverse_lazy
 from django.utils.text import slugify
 from rest_framework import generics, viewsets
-from .models import Course, Quiz, Enrollment, Module, QuizAttempt
+from .models import Course, Quiz, Enrollment, Module, QuizAttempt, Category
 from .forms import CourseForm, ModuleForm, QuizForm, ModuleFormSet
 from django.db import transaction
 from django.forms import modelformset_factory
 import qrcode
 from django.http import HttpResponse
 from io import BytesIO
+from django.db.models import Q
 
 class InstructorRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -22,17 +23,65 @@ class CourseListView(ListView):
     model = Course
     template_name = 'coursesapp/course_catalog.html'
     context_object_name = 'courses'
+    paginate_by = 9  # Show 9 courses per page (3x3 grid)
     
     def get_queryset(self):
+        queryset = Course.objects.all()
+        
+        # Base filter: instructors see their own courses, students see public and published courses
         if self.request.user.is_staff:
-            # Instructors see all their courses
-            return Course.objects.filter(instructor=self.request.user).order_by('-created_at')
-        # Students see only published courses
-        return Course.objects.filter(is_public=True, is_published=True).order_by('-created_at')
+            queryset = queryset.filter(instructor=self.request.user)
+        else:
+            queryset = queryset.filter(is_public=True, is_published=True)
+        
+        # Apply search filter
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) | 
+                Q(description__icontains=search_query)
+            )
+        
+        # Apply category filter
+        category_id = self.request.GET.get('category')
+        if category_id:
+            queryset = queryset.filter(categories__id=category_id)
+        
+        # Apply difficulty filter
+        difficulty = self.request.GET.get('difficulty')
+        if difficulty:
+            queryset = queryset.filter(difficulty=difficulty)
+        
+        # Apply sorting
+        sort_by = self.request.GET.get('sort', '-created_at')
+        valid_sort_fields = ['title', '-title', 'created_at', '-created_at', 'difficulty', '-difficulty']
+        if sort_by in valid_sort_fields:
+            queryset = queryset.order_by(sort_by)
+        else:
+            queryset = queryset.order_by('-created_at')  # Default sorting
+            
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_instructor'] = self.request.user.is_staff
+        context['categories'] = Category.objects.all()
+        
+        # Get unique difficulty levels for filter dropdown
+        context['difficulty_levels'] = Course.objects.values_list('difficulty', flat=True).distinct().order_by('difficulty')
+        
+        # Add current filters to context
+        context['search_query'] = self.request.GET.get('search', '')
+        context['selected_category'] = self.request.GET.get('category', '')
+        context['selected_difficulty'] = self.request.GET.get('difficulty', '')
+        context['current_sort'] = self.request.GET.get('sort', '-created_at')
+        
+        # Preserve existing query parameters when paginating
+        query_params = self.request.GET.copy()
+        if 'page' in query_params:
+            del query_params['page']
+        context['query_params'] = query_params.urlencode()
+        
         return context
 
 @login_required
