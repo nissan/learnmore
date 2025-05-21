@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,7 +27,15 @@ SECRET_KEY = 'django-insecure-n60$uo4lb4z9a1^n01f*u%c*btu0t4gm&+-_l%90rdg_^^ix(#
 DEBUG = True
 
 ALLOWED_HOSTS = ['infs3202-aa2e1925.uqcloud.net', 'aa2e1925.uqcloud.net']
+CSRF_TRUSTED_ORIGINS = [
+    "https://infs3202-aa2e1925.uqcloud.net",
+    "https://aa2e1925.uqcloud.net",
+]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://infs3202-aa2e1925.uqcloud.net",
+    "http://aa2e1925.uqcloud.net",
+]
 
 # Application definition
 
@@ -66,7 +75,7 @@ ROOT_URLCONF = 'learnmore.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,7 +135,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/learnmore/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -140,10 +150,10 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = '/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-ACCOUNT_EMAIL_REQUIRED = True
+LOGIN_REDIRECT_URL = '/learnmore/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/learnmore/'
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -156,3 +166,4 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+FORCE_SCRIPT_NAME = '/learnmore'
