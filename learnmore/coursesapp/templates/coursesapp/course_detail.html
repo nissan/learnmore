@@ -20,6 +20,12 @@
                         <span class="badge bg-primary">Difficulty: {{ course.difficulty }}</span>
                         <span class="badge bg-secondary">Duration: {{ course.duration }}</span>
                     </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="me-2">Share this course:</span>
+                        <a href="{{ course_qr_url }}" target="_blank" class="btn btn-secondary">
+                            <i class="fas fa-qrcode"></i> Show QR Code
+                        </a>
+                    </div>
                     <p class="card-text mt-3">{{ course.description }}</p>
                     {% if user.is_authenticated %}
                         {% if is_instructor %}
@@ -38,7 +44,9 @@
                         {% endif %}
                     {% else %}
                         <div class="alert alert-info mt-3">
-                            <a href="{% url 'account_login' %}">Log in</a> to enroll in this course.
+                            <a href="{% url 'account_signup' %}" class="btn btn-success me-2">Sign Up</a>
+                            <a href="{% url 'account_login' %}" class="btn btn-primary">Log In</a>
+                            to enroll in this course.
                         </div>
                     {% endif %}
                 </div>

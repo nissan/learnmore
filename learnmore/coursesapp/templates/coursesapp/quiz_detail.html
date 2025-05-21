@@ -15,6 +15,10 @@
                     {% else %}
                         <p class="text-muted">No instructions for this quiz.</p>
                     {% endif %}
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="me-2">Share this quiz:</span>
+                        <a href="{{ quiz_qr_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Show QR Code</a>
+                    </div>
                 </div>
             </div>
         </div>

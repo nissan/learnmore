@@ -174,6 +174,7 @@ class Command(BaseCommand):
                 difficulty=course_data['difficulty'],
                 duration=course_data['duration'],
                 is_public=True,
+                is_published=True,  # Ensure published for catalog visibility
                 created_at=timezone.now() - timedelta(days=random.randint(0, 60))
             )
             # Add 2-3 random categories

@@ -10,6 +10,9 @@ from .models import Course, Quiz, Enrollment, Module
 from .forms import CourseForm, ModuleForm, QuizForm, ModuleFormSet
 from django.db import transaction
 from django.forms import modelformset_factory
+import qrcode
+from django.http import HttpResponse
+from io import BytesIO
 
 class InstructorRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -127,6 +130,9 @@ class CourseDetailView(DetailView):
             )
         else:
             context['is_enrolled'] = False
+        # Add QR code URL for this course
+        course_url = self.request.build_absolute_uri(self.request.path)
+        context['course_qr_url'] = reverse('generate_qr_code') + f'?url={course_url}'
         return context
 
 class QuizDetailView(DetailView):
@@ -141,18 +147,22 @@ class QuizDetailView(DetailView):
         if not request.user.is_authenticated:
             messages.warning(request, 'Please log in to access quiz content.')
             return redirect('account_login')
-        
         is_enrolled = Enrollment.objects.filter(
             user=request.user,
             course=quiz.module.course,
             is_active=True
         ).exists()
-        
         if not is_enrolled:
             messages.warning(request, 'You must be enrolled in this course to access quiz content.')
             return redirect('course_detail', slug=quiz.module.course.slug)
-        
         return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        quiz = self.object
+        quiz_url = self.request.build_absolute_uri(self.request.path)
+        context['quiz_qr_url'] = reverse('generate_qr_code') + f'?url={quiz_url}'
+        return context
 
 @login_required
 def enroll_course(request, course_slug):
@@ -210,3 +220,23 @@ def edit_modules(request, course_slug):
         'formset': formset,
         'course': course
     })
+
+def generate_qr_code(request):
+    """Generate QR code for a given URL."""
+    url = request.GET.get('url')
+    if not url:
+        return HttpResponse('URL parameter is required', status=400)
+    try:
+        # Create QR code
+        img = qrcode.make(url)
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        
+        # Set response headers
+        response = HttpResponse(buffer, content_type='image/png')
+        response['Cache-Control'] = 'public, max-age=86400'  # Cache for 24 hours
+        response['Content-Disposition'] = 'inline; filename="qr_code.png"'
+        return response
+    except Exception as e:
+        return HttpResponse(f'Error generating QR code: {str(e)}', status=500)

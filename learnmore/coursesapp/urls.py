@@ -10,6 +10,7 @@ urlpatterns = [
     path('catalog/', views.CourseListView.as_view(), name='course_catalog'),
     path('api/catalog/', views.CourseListAPIView.as_view(), name='course_catalog_api'),
     path('create/', create_course_with_modules, name='course_create'),
+    path('qr/', views.generate_qr_code, name='generate_qr_code'),
     path('<slug:slug>/', views.CourseDetailView.as_view(), name='course_detail'),
     path('quiz/<int:quiz_id>/', views.QuizDetailView.as_view(), name='quiz_detail'),
     path('enroll/<slug:course_slug>/', views.enroll_course, name='enroll_course'),
