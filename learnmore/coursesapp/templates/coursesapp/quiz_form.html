@@ -1,14 +1,370 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<style>
+    .form-section {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-section h3 {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .question-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .delete-question {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .options-container {
+        background-color: #fff;
+        border-radius: 6px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    .option-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+    }
+    .option-item:last-child {
+        margin-bottom: 0;
+    }
+    .option-text {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+    .correct-toggle {
+        width: 120px;
+    }
+    .help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .question-type-controls {
+        display: none;
+    }
+    .short-answer-controls {
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-    <h2>Add Quiz to {{ module.title }}</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-success">Add Quiz</button>
-        <a href="{% url 'course_detail' course.slug %}" class="btn btn-secondary">Back to Course</a>
-    </form>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{% if form.instance.pk %}Edit Quiz{% else %}Create New Quiz{% endif %}</h1>
+                <a href="{% url 'course_detail' module.course.slug %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Course
+                </a>
+            </div>
+            
+            <div class="alert alert-info">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="bi bi-info-circle-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="alert-heading">Creating Quiz for: {{ module.title }}</h5>
+                        <p class="mb-0">This quiz will be added to the module "{{ module.title }}" in the course "{{ module.course.title }}".</p>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="post" id="quizForm">
+                {% csrf_token %}
+                
+                <!-- Quiz Details Section -->
+                <div class="form-section">
+                    <h3>Quiz Details</h3>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Quiz Title*</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.instructions.id_for_label }}" class="form-label">Instructions</label>
+                        {{ form.instructions }}
+                        <div class="help-text">Provide clear instructions for students taking this quiz.</div>
+                        {% if form.instructions.errors %}
+                            <div class="invalid-feedback d-block">{{ form.instructions.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.passing_score.id_for_label }}" class="form-label">Passing Score (%)</label>
+                        {{ form.passing_score }}
+                        <div class="help-text">Minimum percentage needed to pass this quiz.</div>
+                        {% if form.passing_score.errors %}
+                            <div class="invalid-feedback d-block">{{ form.passing_score.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quiz Questions Section -->
+                <div class="form-section">
+                    <h3>Quiz Questions</h3>
+                    <p class="text-muted mb-4">Add multiple-choice, true/false, or short answer questions to your quiz.</p>
+                    
+                    <div id="questions-container">
+                        <!-- Placeholder for dynamic question forms -->
+                        <div class="no-questions-message" id="no-questions-message">
+                            <div class="text-center p-4 border rounded bg-light">
+                                <i class="bi bi-question-circle fs-1 text-secondary mb-3"></i>
+                                <p>No questions added yet. Use the button below to add your first question.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-outline-primary" id="add-question-btn">
+                            <i class="bi bi-plus-circle"></i> Add Question
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-5">
+                    <a href="{% url 'course_detail' module.course.slug %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if form.instance.pk %}Save Changes{% else %}Create Quiz{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<!-- Question Template for JavaScript -->
+<template id="question-template">
+    <div class="question-card" data-question-index="{questionIndex}">
+        <div class="delete-question">
+            <button type="button" class="btn btn-sm btn-outline-danger delete-question-btn">
+                <i class="bi bi-trash"></i> Remove
+            </button>
+        </div>
+        
+        <h4>Question #{questionNumber}</h4>
+        
+        <div class="mb-3">
+            <label class="form-label">Question Text*</label>
+            <textarea name="questions[{questionIndex}][text]" class="form-control" rows="3" placeholder="Enter your question here" required></textarea>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Question Type</label>
+                <select name="questions[{questionIndex}][type]" class="form-select question-type-select">
+                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="true_false">True/False</option>
+                    <option value="short_answer">Short Answer</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Points</label>
+                <input type="number" name="questions[{questionIndex}][points]" class="form-control" value="1" min="1">
+            </div>
+        </div>
+        
+        <!-- Multiple Choice Options -->
+        <div class="question-type-controls multiple-choice-controls">
+            <label class="form-label">Answer Options</label>
+            <div class="options-container">
+                <div class="options-list">
+                    <!-- Options will be inserted here -->
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-3 add-option-btn">
+                    <i class="bi bi-plus"></i> Add Option
+                </button>
+            </div>
+        </div>
+        
+        <!-- True/False Controls -->
+        <div class="question-type-controls true-false-controls">
+            <label class="form-label">Correct Answer</label>
+            <div class="options-container">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="questions[{questionIndex}][correct]" id="questions[{questionIndex}][true]" value="true" checked>
+                    <label class="form-check-label" for="questions[{questionIndex}][true]">True</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="questions[{questionIndex}][correct]" id="questions[{questionIndex}][false]" value="false">
+                    <label class="form-check-label" for="questions[{questionIndex}][false]">False</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Short Answer Controls -->
+        <div class="question-type-controls short-answer-controls">
+            <div class="help-text">
+                Students will need to provide a text answer that will be manually graded.
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Option Template for JavaScript -->
+<template id="option-template">
+    <div class="option-item">
+        <div class="option-text">
+            <input type="text" name="questions[{questionIndex}][options][{optionIndex}][text]" class="form-control" placeholder="Answer option" required>
+        </div>
+        <div class="correct-toggle">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="questions[{questionIndex}][options][{optionIndex}][correct]" id="questions[{questionIndex}][options][{optionIndex}][correct]">
+                <label class="form-check-label" for="questions[{questionIndex}][options][{optionIndex}][correct]">Correct</label>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionsContainer = document.getElementById('questions-container');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        const noQuestionsMessage = document.getElementById('no-questions-message');
+        const questionTemplate = document.getElementById('question-template').innerHTML;
+        const optionTemplate = document.getElementById('option-template').innerHTML;
+        let questionCount = 0;
+        
+        // Function to add a new question
+        function addQuestion() {
+            const questionIndex = questionCount;
+            questionCount++;
+            
+            // Hide no questions message
+            noQuestionsMessage.style.display = 'none';
+            
+            // Create question from template
+            let questionHtml = questionTemplate
+                .replace(/{questionIndex}/g, questionIndex)
+                .replace(/{questionNumber}/g, questionCount);
+            
+            // Create a temporary container to convert the string to DOM elements
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = questionHtml;
+            const questionCard = tempContainer.firstElementChild;
+            
+            // Add the question card to the container
+            questionsContainer.appendChild(questionCard);
+            
+            // Set up event listeners for the new question
+            setupQuestionCard(questionCard, questionIndex);
+            
+            // Show the multiple choice options by default
+            const typeSelect = questionCard.querySelector('.question-type-select');
+            updateQuestionType(questionCard, typeSelect.value);
+            
+            // Add initial options for multiple choice
+            addOption(questionCard, questionIndex, 0);
+            addOption(questionCard, questionIndex, 1);
+            
+            return questionCard;
+        }
+        
+        // Function to set up event listeners for a question card
+        function setupQuestionCard(questionCard, questionIndex) {
+            // Type select change
+            const typeSelect = questionCard.querySelector('.question-type-select');
+            typeSelect.addEventListener('change', function() {
+                updateQuestionType(questionCard, this.value);
+            });
+            
+            // Delete question button
+            const deleteBtn = questionCard.querySelector('.delete-question-btn');
+            deleteBtn.addEventListener('click', function() {
+                questionCard.remove();
+                
+                // If no questions left, show the message
+                if (questionsContainer.querySelectorAll('.question-card').length === 0) {
+                    noQuestionsMessage.style.display = 'block';
+                }
+            });
+            
+            // Add option button
+            const addOptionBtn = questionCard.querySelector('.add-option-btn');
+            if (addOptionBtn) {
+                addOptionBtn.addEventListener('click', function() {
+                    const optionsContainer = questionCard.querySelector('.options-list');
+                    const optionCount = optionsContainer.querySelectorAll('.option-item').length;
+                    addOption(questionCard, questionIndex, optionCount);
+                });
+            }
+        }
+        
+        // Function to update question type display
+        function updateQuestionType(questionCard, type) {
+            const typeControls = questionCard.querySelectorAll('.question-type-controls');
+            typeControls.forEach(control => {
+                control.style.display = 'none';
+            });
+            
+            // Show the right controls
+            const controlsToShow = questionCard.querySelector('.' + type + '-controls');
+            if (controlsToShow) {
+                controlsToShow.style.display = 'block';
+            }
+        }
+        
+        // Function to add a new option to a multiple choice question
+        function addOption(questionCard, questionIndex, optionIndex) {
+            const optionsContainer = questionCard.querySelector('.options-list');
+            let optionHtml = optionTemplate
+                .replace(/{questionIndex}/g, questionIndex)
+                .replace(/{optionIndex}/g, optionIndex);
+            
+            // Create option element
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = optionHtml;
+            const optionElem = tempContainer.firstElementChild;
+            
+            // Add option to container
+            optionsContainer.appendChild(optionElem);
+        }
+        
+        // Add question button click
+        addQuestionBtn.addEventListener('click', function() {
+            addQuestion();
+        });
+        
+        // Form submission handling
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            // Ensure at least one question exists
+            if (questionsContainer.querySelectorAll('.question-card').length === 0) {
+                e.preventDefault();
+                alert('Please add at least one question to your quiz.');
+                return false;
+            }
+            
+            // Additional validation could go here
+            
+            return true;
+        });
+        
+        // Add first question automatically
+        addQuestion();
+    });
+</script>
 {% endblock %} 

@@ -1,16 +1,289 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+    .form-section {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-section h3 {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .module-form {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .delete-module {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .category-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+    .category-container label {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .category-container label:hover {
+        background-color: #e9ecef;
+    }
+    .category-container input[type="checkbox"] {
+        margin-right: 8px;
+    }
+    .add-module-btn {
+        margin-top: 15px;
+    }
+    .help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-  <h1>Create Course</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <h2>Modules</h2>
-    {{ module_formset.management_form }}
-    {% for module_form in module_formset %}
-      <div class="card mb-3 p-3">
-        {{ module_form.as_p }}
-      </div>
-    {% endfor %}
-    <button type="submit" class="btn btn-primary">Create</button>
-  </form>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="mb-4">{% if form.instance.pk %}Edit Course{% else %}Create New Course{% endif %}</h1>
+            
+            <form method="post" id="courseForm">
+                {% csrf_token %}
+                
+                <!-- Course Details Section -->
+                <div class="form-section">
+                    <h3>Course Details</h3>
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Course Title*</label>
+                        {{ form.title }}
+                        {% if form.title.help_text %}
+                            <div class="help-text">{{ form.title.help_text }}</div>
+                        {% endif %}
+                        {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description*</label>
+                        {{ form.description }}
+                        {% if form.description.help_text %}
+                            <div class="help-text">{{ form.description.help_text }}</div>
+                        {% endif %}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.difficulty.id_for_label }}" class="form-label">Difficulty Level*</label>
+                                {{ form.difficulty }}
+                                {% if form.difficulty.help_text %}
+                                    <div class="help-text">{{ form.difficulty.help_text }}</div>
+                                {% endif %}
+                                {% if form.difficulty.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.difficulty.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.duration.id_for_label }}" class="form-label">Duration*</label>
+                                {{ form.duration }}
+                                {% if form.duration.help_text %}
+                                    <div class="help-text">{{ form.duration.help_text }}</div>
+                                {% endif %}
+                                {% if form.duration.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.duration.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Categories*</label>
+                        <div class="category-container">
+                            {{ form.categories }}
+                        </div>
+                        {% if form.categories.errors %}
+                            <div class="invalid-feedback d-block">{{ form.categories.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.is_published }}
+                        <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                            Publish this course
+                        </label>
+                        {% if form.is_published.help_text %}
+                            <div class="help-text">{{ form.is_published.help_text }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Modules Section -->
+                <div class="form-section">
+                    <h3>Course Modules</h3>
+                    <p class="text-muted mb-4">Create the modules for your course. You can add rich content and reorder them as needed.</p>
+                    
+                    {{ module_formset.management_form }}
+                    <div id="module-forms">
+                        {% for module_form in module_formset.forms %}
+                            <div class="module-form">
+                                {% if module_form.instance.pk %}
+                                    <h4>Module #{{ forloop.counter }}</h4>
+                                {% else %}
+                                    <h4>New Module</h4>
+                                {% endif %}
+                                
+                                {% for hidden in module_form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                                
+                                {% if module_formset.can_delete %}
+                                    <div class="delete-module">
+                                        {{ module_form.DELETE }}
+                                        <label for="{{ module_form.DELETE.id_for_label }}" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </label>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ module_form.title.id_for_label }}" class="form-label">Module Title*</label>
+                                    {{ module_form.title }}
+                                    {% if module_form.title.errors %}
+                                        <div class="invalid-feedback d-block">{{ module_form.title.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ module_form.description.id_for_label }}" class="form-label">Short Description</label>
+                                    {{ module_form.description }}
+                                    {% if module_form.description.errors %}
+                                        <div class="invalid-feedback d-block">{{ module_form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ module_form.content.id_for_label }}" class="form-label">Module Content</label>
+                                    {{ module_form.content }}
+                                    {% if module_form.content.errors %}
+                                        <div class="invalid-feedback d-block">{{ module_form.content.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ module_form.order.id_for_label }}" class="form-label">Order</label>
+                                    {{ module_form.order }}
+                                    {% if module_form.order.errors %}
+                                        <div class="invalid-feedback d-block">{{ module_form.order.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="button" id="add-module" class="btn btn-outline-primary add-module-btn">
+                        <i class="bi bi-plus-circle"></i> Add Another Module
+                    </button>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-5">
+                    <a href="{% url 'course_catalog' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if form.instance.pk %}Save Changes{% else %}Create Course{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize rich text editor for module content
+        $('.rich-text-editor').summernote({
+            height: 200,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture']],
+                ['view', ['fullscreen', 'codeview']]
+            ]
+        });
+        
+        // Add module button functionality
+        const addModuleBtn = document.getElementById('add-module');
+        const totalFormsInput = document.getElementById('id_modules-TOTAL_FORMS');
+        
+        addModuleBtn.addEventListener('click', function() {
+            const moduleForms = document.getElementById('module-forms');
+            const formCount = parseInt(totalFormsInput.value);
+            
+            // Clone the first form (empty template)
+            const newForm = moduleForms.querySelector('.module-form').cloneNode(true);
+            
+            // Update form index
+            newForm.innerHTML = newForm.innerHTML
+                .replace(/-0-/g, `-${formCount}-`)
+                .replace(/_0_/g, `_${formCount}_`);
+            
+            // Clear input values
+            newForm.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                input.value = '';
+            });
+            
+            // Set order value
+            const orderInput = newForm.querySelector(`input[name="modules-${formCount}-order"]`);
+            if (orderInput) {
+                orderInput.value = formCount;
+            }
+            
+            // Reinitialize Summernote for the new form
+            moduleForms.appendChild(newForm);
+            $(newForm).find('.rich-text-editor').summernote({
+                height: 200,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture']],
+                    ['view', ['fullscreen', 'codeview']]
+                ]
+            });
+            
+            // Update total forms count
+            totalFormsInput.value = formCount + 1;
+        });
+    });
+</script>
 {% endblock %} 
